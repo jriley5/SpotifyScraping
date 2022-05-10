@@ -5,10 +5,6 @@ import spotipy
 import json
 from spotipy.oauth2 import SpotifyClientCredentials
 import os.path
-import skimage.color
-from skimage import io, color
-from skimage.transform import rescale, resize
-from skimage.util import img_as_ubyte
 from timeit import default_timer as timer
 
 # this script is fed a list of playlists and their track counts, and dumps the album art as images to /images,
@@ -16,7 +12,6 @@ from timeit import default_timer as timer
 # resize.py converts these images to 512x512 and turns grayscale images to RGB
 
 save_path = "change this to directory for saving images"
-
 
 
 class SpotifySong:
@@ -31,15 +26,6 @@ class SpotifySong:
         self.artist_pop = artist_pop
         self.artist_name = artist_name
         self.track_name = track_name
-
-    def __str__(self):
-        res = "track name: " + self.track_name
-        # res += "\nartist name: " + self.artist_name
-        # res += "\nartist popularity: " + str(self.artist_pop)
-        res += "\ncover art: " + str(self.cover_art)
-        # res += "\nartist genres: " + str(self.artist_genres)
-        res += "\n"
-        return res
 
 
 # Authentication - without user
@@ -81,6 +67,8 @@ def scrape_playlist(uri, num_tracks):
     global master_song_list, current_track_id
     print("number of tracks: " + str(num_tracks))
 
+    # Spotify only lets us access 100 tracks at a time, so we have to use the
+    # "offset" param to iterate through large playlists
     num_repeats = max(int(num_tracks / 100), 1)
 
     for r in range(num_repeats):
@@ -91,10 +79,13 @@ def scrape_playlist(uri, num_tracks):
 
         for track in sp.playlist_tracks(uri, offset=current_offset)["items"]:
 
+            # There's a lot of info we can grab from each track.
+            # A slightly different problem for our project could have involved using
+            # artist names or genre tags as input for our GAN.
+
             if current_track_id <= 1548:
                 current_track_id += 1
                 continue
-
 
             # URI
             track_uri = track["track"]["uri"]
@@ -107,7 +98,8 @@ def scrape_playlist(uri, num_tracks):
             track_name = track["track"]["name"]
             track_name = track_name.replace('/', "")
 
-            #
+            # Info we decided we didn't want...
+
             # Main Artist
             # artist_uri = track["track"]["artists"][0]["uri"]
             # artist_info = sp.artist(artist_uri)
@@ -117,14 +109,12 @@ def scrape_playlist(uri, num_tracks):
             # artist_pop = artist_info["popularity"]
             # artist_genres = artist_info["genres"]
             # print(track_name)
-            #
             # # Album
             # album = track["track"]["album"]["name"]
             try:
                 cover_art = track["track"]['album']['images'][0]['url']
             except IndexError:
                 print("no cover art")
-            # print(cover_art)
 
             # # Popularity of the track
             # track_pop = track["track"]["popularity"]
@@ -145,6 +135,9 @@ def scrape_playlist(uri, num_tracks):
 # loop through all playlists and scrape
 for i in range(len(playlist_URIs)):
     scrape_playlist(playlist_URIs[i], playlist_track_counts[i])
+
+# This program is also able to dump all of the above song info to json.
+# We opted out of this once we gathered our 30k image dataset, but could be useful in other problems.
 
 # json_string = json.dumps(master_song_list, default=vars, indent=4)
 # with open('json_data.json', 'w') as outfile:
