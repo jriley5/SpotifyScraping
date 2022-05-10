@@ -1,4 +1,4 @@
-# cs1430-final
+# cs1430-final: MS Paint
 Hunter Karas, Jack Riley & Michael Xu CS1430 Final
 
 This repo contains 
